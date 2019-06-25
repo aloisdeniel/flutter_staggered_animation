@@ -24,8 +24,7 @@ class StaggeredState extends State<Staggered> {
 
   void _removeStep(_AnimatedStepState step) {
     this._steps.remove(step);
-    this.setState(() {});
-    _buildStepAnimations();
+    _planifyUpdate();
   }
 
   void _buildStepAnimations() {
@@ -67,7 +66,6 @@ class StaggeredState extends State<Staggered> {
   void _planifyUpdate() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
         _buildStepAnimations();
-        setState(() {});
     });
   }
 
