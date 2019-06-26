@@ -12,7 +12,7 @@ class Stagger extends StatefulWidget {
       {@required this.animation,
       this.stepDelay = 0,
       this.defaultCurve = Curves.easeInOut,
-      this.defaultTransition = StepTransisions.fade,
+      this.defaultTransition = StepTransitions.fade,
       @required this.child,
       Key key})
       : assert(stepDelay != null),
@@ -53,7 +53,7 @@ class StaggerState extends State<Stagger> {
 
   @override
   Widget build(BuildContext context) {
-    return _InheritedStaggered(
+    return _InheritedStagger(
       steps: this._steps,
       animation: this.widget.animation,
       child: this.widget.child,
@@ -65,7 +65,7 @@ class StaggerState extends State<Stagger> {
   }
 }
 
-class _InheritedStaggered extends InheritedWidget {
+class _InheritedStagger extends InheritedWidget {
   final Animation<double> animation;
   final int stepDelay;
   final int totalSteps;
@@ -73,7 +73,7 @@ class _InheritedStaggered extends InheritedWidget {
   final StepTransitionBuilder defaultTransition;
   final List<StaggerStep> steps;
 
-  _InheritedStaggered(
+  _InheritedStagger(
       {@required Widget child,
       @required this.steps,
       @required this.defaultCurve,
@@ -83,14 +83,14 @@ class _InheritedStaggered extends InheritedWidget {
       @required this.totalSteps})
       : super(child: child);
 
-  static _InheritedStaggered of(BuildContext context) {
-    final result = context.inheritFromWidgetOfExactType(_InheritedStaggered);
+  static _InheritedStagger of(BuildContext context) {
+    final result = context.inheritFromWidgetOfExactType(_InheritedStagger);
     assert(result != null);
     return result;
   }
 
   @override
-  bool updateShouldNotify(_InheritedStaggered oldWidget) {
+  bool updateShouldNotify(_InheritedStagger oldWidget) {
     return oldWidget.totalSteps != this.totalSteps ||
         oldWidget.animation != this.animation;
   }
@@ -108,7 +108,7 @@ class StaggerStep extends StatefulWidget {
       Key key,
       int index = 0,
       int steps = 1,
-      this.transition = StepTransisions.fade,
+      this.transition = StepTransitions.fade,
       this.curve = Curves.easeOut})
       : this.index = math.max(0, index),
         this.steps = math.max(1, steps ?? 1),
@@ -126,7 +126,7 @@ class StaggerStep extends StatefulWidget {
       index: index,
       steps: steps,
       curve: curve,
-      transition: StepTransisions.fade,
+      transition: StepTransitions.fade,
     );
   }
 
@@ -144,7 +144,7 @@ class StaggerStep extends StatefulWidget {
       index: index,
       steps: steps,
       curve: curve,
-      transition: StepTransisions.slide(position, fading),
+      transition: StepTransitions.slide(position, fading),
     );
   }
 
@@ -182,7 +182,7 @@ class _StaggerStepState extends State<StaggerStep> {
 
   @override
   Widget build(BuildContext context) {
-    final staggered = _InheritedStaggered.of(context);
+    final staggered = _InheritedStagger.of(context);
 
     Animation<double> animation;
 
@@ -223,7 +223,7 @@ class _StaggerStepState extends State<StaggerStep> {
 typedef StepTransitionBuilder = Widget Function(
     BuildContext context, Widget child, double amount);
 
-abstract class StepTransisions {
+abstract class StepTransitions {
   static Widget fade(context, child, time) =>
       Opacity(child: child, opacity: time);
 
