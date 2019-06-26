@@ -12,7 +12,7 @@ class HelloWorldPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StaggerIn(
-        duration: const Duration(seconds: 5),
+        duration: const Duration(seconds: 3),
         child: Column(children: <Widget>[
           StaggerStep.fade(
               index: 0,

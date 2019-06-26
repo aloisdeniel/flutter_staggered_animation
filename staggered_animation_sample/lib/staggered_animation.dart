@@ -29,10 +29,11 @@ class StaggerState extends State<Stagger> {
   final _steps = <StaggerStep>[];
 
   int get totalSteps {
-    return _steps.fold(0, (previous, step) {
-      final stepEnd = step.index + step.steps;
-      return this.widget.stepDelay + math.max(previous, stepEnd);
-    });
+    return this.widget.stepDelay +
+        _steps.fold(0, (previous, step) {
+          final stepEnd = step.index + step.steps;
+          return math.max(previous, stepEnd);
+        });
   }
 
   void addStep(StaggerStep step) {
@@ -54,7 +55,7 @@ class StaggerState extends State<Stagger> {
   @override
   Widget build(BuildContext context) {
     return _InheritedStagger(
-      steps: this._steps,
+      steps: this._steps.toList(),
       animation: this.widget.animation,
       child: this.widget.child,
       stepDelay: this.widget.stepDelay,
@@ -159,16 +160,16 @@ class _StaggerStepState extends State<StaggerStep> {
   void didUpdateWidget(StaggerStep oldWidget) {
     if (oldWidget.index != this.widget.index ||
         oldWidget.steps != this.widget.steps) {
-          _staggeredState.updateStep(oldWidget, this.widget);
-        }
+      _staggeredState.updateStep(oldWidget, this.widget);
+    }
     super.didUpdateWidget(oldWidget);
   }
 
   @override
   void initState() {
-    _staggeredState =
-        this.context.ancestorStateOfType(const TypeMatcher<StaggerState>())
-            as StaggerState;
+    _staggeredState = this
+        .context
+        .ancestorStateOfType(const TypeMatcher<StaggerState>()) as StaggerState;
     assert(_staggeredState != null);
     _staggeredState.addStep(this.widget);
     super.initState();
@@ -190,23 +191,21 @@ class _StaggerStepState extends State<StaggerStep> {
         step.index == this.widget.index && step.steps == this.widget.steps)) {
       final startTime =
           (staggered.stepDelay + this.widget.index) / staggered.totalSteps;
-      final interval = Interval(
-        startTime,
-        startTime + (this.widget.steps / staggered.totalSteps),
-        curve: widget.curve ?? staggered.defaultCurve,
-      );
-
+      final endTime = startTime + (this.widget.steps / staggered.totalSteps);
       animation = Tween<double>(
         begin: 0.0,
         end: 1.0,
       ).animate(
         CurvedAnimation(
           parent: staggered.animation,
-          curve: interval,
+          curve: Interval(
+            startTime,
+            endTime,
+            curve: widget.curve ?? staggered.defaultCurve,
+          ),
         ),
       );
-    }
-    else {
+    } else {
       animation = const AlwaysStoppedAnimation(0.0);
     }
 
@@ -249,11 +248,11 @@ class StaggerIn extends StatefulWidget {
   final StepTransitionBuilder defaultTransition;
 
   StaggerIn(
-      {this.duration,
+      {@required this.duration,
+      @required this.child,
       this.stepDelay = 0,
       this.defaultCurve = Curves.easeInOut,
       this.defaultTransition,
-      @required this.child,
       Key key})
       : super(key: key);
 
@@ -261,15 +260,14 @@ class StaggerIn extends StatefulWidget {
   _StaggerInState createState() => _StaggerInState();
 }
 
-class _StaggerInState extends State<StaggerIn>
-    with TickerProviderStateMixin {
+class _StaggerInState extends State<StaggerIn> with TickerProviderStateMixin {
   AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(duration: widget.duration, vsync: this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _controller.forward());
+    _controller.forward();
   }
 
   @override
