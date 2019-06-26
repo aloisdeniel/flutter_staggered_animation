@@ -13,7 +13,7 @@ I ended with a solution that makes it easier to declare such staggered animation
 
 ```dart
 StaggerIn(
-  duration: const Duration(seconds: 3), // <- Total animation duration (here, each step 1 second)
+  duration: const Duration(seconds: 3), // <- Total animation duration (here, each step is 1 second)
   child: Column(children: <Widget>[
     StaggerStep.fade(
         index: 0, // <- Starts at 1
@@ -24,7 +24,7 @@ StaggerIn(
           color: Colors.red,
         )),
     StaggerStep.slide(
-        index: 1, // <- Start at 1
+        index: 1, // <- Starts at 1
         steps: 1, // <- Ends at 2
         child: Container(
           width: 100,
