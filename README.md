@@ -7,7 +7,7 @@ Recently I had to achieve various entrance animations in my app and came accross
 
 I love how free you are with Flutter animations, but it becomes a real mess as soon as you have multiple coordinated animations.
 
-I ended with a solution that makes it easier to declare such staggered animations, but based on indexes.
+I ended with a solution that makes easier to declare such staggered animations, based on indexes.
 
 # Stagger
 
