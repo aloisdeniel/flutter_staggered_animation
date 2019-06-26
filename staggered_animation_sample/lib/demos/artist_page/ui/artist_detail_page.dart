@@ -27,10 +27,11 @@ class ArtistDetailsPage extends StatelessWidget {
   }
 
   Widget _buildAvatar() {
-    return AnimatedStep(
+    return StaggerStep(
       index: 1,
+      steps: 2,
       curve: Curves.elasticOut,
-      builder: (context, child, time) => Transform(
+      transition: (context, child, time) => Transform(
           transform: Matrix4.diagonal3Values(
             time,
             time,
@@ -60,7 +61,7 @@ class ArtistDetailsPage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          AnimatedStep.fade(
+          StaggerStep.fade(
             index: 2,
             child: Text(
               artist.firstName + '\n' + artist.lastName,
@@ -71,7 +72,7 @@ class ArtistDetailsPage extends StatelessWidget {
               ),
             ),
           ),
-          AnimatedStep.fade(
+          StaggerStep.fade(
             index: 3,
             child: Text(artist.location,
                 style: TextStyle(
@@ -79,10 +80,10 @@ class ArtistDetailsPage extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 )),
           ),
-          AnimatedStep(
+          StaggerStep(
               index: 4,
               curve: Curves.fastOutSlowIn,
-              builder: (context, child, time) => Container(
+              transition: (context, child, time) => Container(
                     child: child,
                     width: time * 225.0,
                     height: 1.0,
@@ -90,7 +91,7 @@ class ArtistDetailsPage extends StatelessWidget {
                     margin: const EdgeInsets.symmetric(vertical: 16.0),
                   ),
               child: SizedBox()),
-          AnimatedStep.fade(
+          StaggerStep.fade(
             index: 5,
             child: Text(
               artist.biography,
@@ -106,10 +107,10 @@ class ArtistDetailsPage extends StatelessWidget {
   }
 
   Widget _buildVideoScroller() {
-    return AnimatedStep.slide(
+    return StaggerStep.slide(
       index: 6,
-      duration: 3,
-      from: Alignment.centerRight,
+      steps: 3,
+      position: Alignment.centerRight,
       child: Padding(
         padding: const EdgeInsets.only(top: 16.0),
         child: SizedBox.fromSize(
@@ -131,14 +132,14 @@ class ArtistDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StaggeredEntrance(
-      delay: 5,
-      duration: const Duration(milliseconds: 1200),
+      stepDelay: 5,
+      duration: const Duration(seconds: 4),
       child: Scaffold(
-        body: AnimatedStep(
+        body: StaggerStep(
           index: 0,
-          duration: 3,
+          steps: 3,
           child: _buildContent(),
-          builder: (context, child, time) => Stack(
+          transition: (context, child, time) => Stack(
                 fit: StackFit.expand,
                 children: <Widget>[
                   Opacity(

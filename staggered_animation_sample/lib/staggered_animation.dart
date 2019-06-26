@@ -1,86 +1,260 @@
-import 'dart:math';
-
 import 'package:flutter/widgets.dart';
+import 'dart:math' as math;
 
-class Staggered extends StatefulWidget {
+class Stagger extends StatefulWidget {
   final Widget child;
   final Animation<double> animation;
-  final int delay;
+  final int stepDelay;
+  final Curve defaultCurve;
+  final StepTransitionBuilder defaultTransition;
 
-  Staggered({@required this.animation, this.delay = 0, @required this.child, Key key})
-      : super(key: key);
+  Stagger(
+      {@required this.animation,
+      this.stepDelay = 0,
+      this.defaultCurve = Curves.easeInOut,
+      this.defaultTransition = StepTransisions.fade,
+      @required this.child,
+      Key key})
+      : assert(stepDelay != null),
+        assert(defaultCurve != null),
+        assert(animation != null),
+        assert(child != null),
+        super(key: key);
 
   @override
-  StaggeredState createState() => StaggeredState();
+  StaggerState createState() => StaggerState();
 }
 
-class StaggeredState extends State<Staggered> {
-  final List<_AnimatedStepState> _steps = [];
-  int _totalDuration;
+class StaggerState extends State<Stagger> {
+  final _steps = <StaggerStep>[];
 
-  void _addStep(_AnimatedStepState step) {
-    this._steps.add(step);
-  }
-
-  void _removeStep(_AnimatedStepState step) {
-    this._steps.remove(step);
-    _planifyUpdate();
-  }
-
-  void _buildStepAnimations() {
-    var autoIndex = 0;
-
-    _totalDuration = 0;
-    for (var i = 0; i < _steps.length; i++) {
-      final step = _steps[i];
-      final index = (step.widget.index ?? autoIndex++)  + (this.widget.delay ?? 0);
-      final duration = step.widget.duration ?? 1;
-      _totalDuration = max(_totalDuration, index + duration);
-
-      step._startIndex = index;
-      step._durationIndex = duration;
-    }
-
-    final interval = 1.0 / _totalDuration;
-
-    _steps.forEach((step) {
-      step._startTime = step._startIndex * interval;
-      step._endTime = step._startTime + interval * (step._durationIndex ?? 1);
-      step.setState(() {});
+  int get totalSteps {
+    return _steps.fold(0, (previous, step) {
+      final stepEnd = step.index + step.steps;
+      return this.widget.stepDelay + math.max(previous, stepEnd);
     });
-
-    final animation = widget.animation;
-    if (animation is AnimationController) {
-      if (animation.duration == null) {
-        animation.duration = Duration(milliseconds: 500 * this._totalDuration);
-      }
-    }
   }
 
-  @override
-  void initState() {
-    _planifyUpdate();
-    super.initState();
+  void addStep(StaggerStep step) {
+    _steps.add(step);
+    WidgetsBinding.instance.addPostFrameCallback((_) => this.setState(() {}));
   }
 
-  void _planifyUpdate() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-        _buildStepAnimations();
-    });
+  void updateStep(StaggerStep oldStep, StaggerStep newStep) {
+    _steps.remove(oldStep);
+    _steps.add(newStep);
+    this.setState(() {});
+  }
+
+  void removeStep(StaggerStep step) {
+    _steps.remove(step);
+    this.setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    return this.widget.child;
+    return _InheritedStaggered(
+      steps: this._steps,
+      animation: this.widget.animation,
+      child: this.widget.child,
+      stepDelay: this.widget.stepDelay,
+      totalSteps: this.totalSteps,
+      defaultCurve: this.widget.defaultCurve,
+      defaultTransition: this.widget.defaultTransition,
+    );
   }
+}
+
+class _InheritedStaggered extends InheritedWidget {
+  final Animation<double> animation;
+  final int stepDelay;
+  final int totalSteps;
+  final Curve defaultCurve;
+  final StepTransitionBuilder defaultTransition;
+  final List<StaggerStep> steps;
+
+  _InheritedStaggered(
+      {@required Widget child,
+      @required this.steps,
+      @required this.defaultCurve,
+      @required this.defaultTransition,
+      @required this.animation,
+      @required this.stepDelay,
+      @required this.totalSteps})
+      : super(child: child);
+
+  static _InheritedStaggered of(BuildContext context) {
+    final result = context.inheritFromWidgetOfExactType(_InheritedStaggered);
+    assert(result != null);
+    return result;
+  }
+
+  @override
+  bool updateShouldNotify(_InheritedStaggered oldWidget) {
+    return oldWidget.totalSteps != this.totalSteps ||
+        oldWidget.animation != this.animation;
+  }
+}
+
+class StaggerStep extends StatefulWidget {
+  final int index;
+  final int steps;
+  final Widget child;
+  final Curve curve;
+  final StepTransitionBuilder transition;
+
+  StaggerStep(
+      {@required this.child,
+      Key key,
+      int index = 0,
+      int steps = 1,
+      this.transition = StepTransisions.fade,
+      this.curve = Curves.easeOut})
+      : this.index = math.max(0, index),
+        this.steps = math.max(1, steps ?? 1),
+        super(key: key);
+
+  factory StaggerStep.fade(
+      {@required Widget child,
+      Key key,
+      int index = 0,
+      int steps = 1,
+      Curve curve = Curves.easeOut}) {
+    return StaggerStep(
+      key: key,
+      child: child,
+      index: index,
+      steps: steps,
+      curve: curve,
+      transition: StepTransisions.fade,
+    );
+  }
+
+  factory StaggerStep.slide(
+      {@required Widget child,
+      Key key,
+      Alignment position = Alignment.bottomCenter,
+      int index = 0,
+      int steps = 1,
+      bool fading = true,
+      Curve curve = Curves.easeOut}) {
+    return StaggerStep(
+      key: key,
+      child: child,
+      index: index,
+      steps: steps,
+      curve: curve,
+      transition: StepTransisions.slide(position, fading),
+    );
+  }
+
+  @override
+  _StaggerStepState createState() => _StaggerStepState();
+}
+
+class _StaggerStepState extends State<StaggerStep> {
+  StaggerState _staggeredState;
+
+  @override
+  void didUpdateWidget(StaggerStep oldWidget) {
+    if (oldWidget.index != this.widget.index ||
+        oldWidget.steps != this.widget.steps) {
+          _staggeredState.updateStep(oldWidget, this.widget);
+        }
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void initState() {
+    _staggeredState =
+        this.context.ancestorStateOfType(const TypeMatcher<StaggerState>())
+            as StaggerState;
+    assert(_staggeredState != null);
+    _staggeredState.addStep(this.widget);
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _staggeredState.removeStep(this.widget);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final staggered = _InheritedStaggered.of(context);
+
+    Animation<double> animation;
+
+    if (staggered.steps.any((step) =>
+        step.index == this.widget.index && step.steps == this.widget.steps)) {
+      final startTime =
+          (staggered.stepDelay + this.widget.index) / staggered.totalSteps;
+      final interval = Interval(
+        startTime,
+        startTime + (this.widget.steps / staggered.totalSteps),
+        curve: widget.curve ?? staggered.defaultCurve,
+      );
+
+      animation = Tween<double>(
+        begin: 0.0,
+        end: 1.0,
+      ).animate(
+        CurvedAnimation(
+          parent: staggered.animation,
+          curve: interval,
+        ),
+      );
+    }
+    else {
+      animation = const AlwaysStoppedAnimation(0.0);
+    }
+
+    final transition = this.widget.transition ?? staggered.defaultTransition;
+
+    return AnimatedBuilder(
+      builder: (context, child) => transition(context, child, animation.value),
+      animation: animation,
+      child: this.widget.child,
+    );
+  }
+}
+
+typedef StepTransitionBuilder = Widget Function(
+    BuildContext context, Widget child, double amount);
+
+abstract class StepTransisions {
+  static Widget fade(context, child, time) =>
+      Opacity(child: child, opacity: time);
+
+  static StepTransitionBuilder slide(Alignment position, bool fading) =>
+      (context, child, time) {
+        Widget result = FractionalTranslation(
+            translation:
+                Offset.lerp(Offset(position.x, position.y), Offset.zero, time),
+            child: child);
+
+        if (fading) {
+          result = Opacity(child: result, opacity: time.clamp(0.0, 1.0));
+        }
+        return result;
+      };
 }
 
 class StaggeredEntrance extends StatefulWidget {
   final Duration duration;
   final Widget child;
-  final int delay;
+  final int stepDelay;
+  final Curve defaultCurve;
+  final StepTransitionBuilder defaultTransition;
 
-  StaggeredEntrance({this.duration, this.delay = 0, @required this.child, Key key})
+  StaggeredEntrance(
+      {this.duration,
+      this.stepDelay = 0,
+      this.defaultCurve = Curves.easeInOut,
+      this.defaultTransition,
+      @required this.child,
+      Key key})
       : super(key: key);
 
   @override
@@ -106,160 +280,12 @@ class _StaggeredEntranceState extends State<StaggeredEntrance>
 
   @override
   Widget build(BuildContext context) {
-    return Staggered(
-      delay: widget.delay,
+    return Stagger(
+      stepDelay: widget.stepDelay,
+      defaultCurve: widget.defaultCurve,
+      defaultTransition: widget.defaultTransition,
       animation: _controller,
       child: widget.child,
     );
   }
-}
-
-class AnimatedStep extends StatefulWidget {
-  final int index;
-  final int duration;
-  final Widget child;
-  final Curve curve;
-  final StepTransitionBuilder builder;
-
-  AnimatedStep(
-      {@required this.child,
-      Key key,
-      this.index,
-      this.duration,
-      @required this.builder,
-      this.curve = Curves.easeOut})
-      : super(key: key);
-
-  factory AnimatedStep.fade(
-      {@required Widget child,
-      Key key,
-      int index,
-      int duration,
-      Curve curve = Curves.easeIn}) {
-    return AnimatedStep(
-      key: key,
-      child: child,
-      index: index,
-      duration: duration,
-      curve: curve,
-      builder: (context, child, time) => Opacity(child: child, opacity: time),
-    );
-  }
-
-  factory AnimatedStep.slide(
-      {@required Widget child,
-      Key key,
-      Alignment from = Alignment.bottomCenter,
-      int index,
-      int duration = 1,
-      bool fading = true,
-      Curve curve = Curves.easeInOut}) {
-    return AnimatedStep(
-      key: key,
-      child: child,
-      index: index,
-      duration: duration,
-      curve: curve,
-      builder: (context, child, time) {
-        Widget result = FractionalTranslation(
-            translation: Offset.lerp(Offset(from.x, from.y), Offset.zero, time),
-            child: child);
-
-        if (fading) {
-          result = Opacity(child: result, opacity: time.clamp(0.0, 1.0));
-        }
-        return result;
-      },
-    );
-  }
-
-  @override
-  _AnimatedStepState createState() => _AnimatedStepState();
-}
-
-class _AnimatedStepState extends State<AnimatedStep> {
-  StaggeredState _animationStateAncestor;
-  int _startIndex;
-  int _durationIndex;
-  double _startTime;
-  double _endTime;
-
-  @override
-  void initState() {
-    _animationStateAncestor = this
-            .context
-            .ancestorStateOfType(const TypeMatcher<StaggeredState>())
-        as StaggeredState;
-    assert(_animationStateAncestor != null);
-    _animationStateAncestor._addStep(this);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _animationStateAncestor._removeStep(this);
-    super.dispose();
-  }
-
-  @override
-  void didUpdateWidget(AnimatedStep oldWidget) {
-    if (oldWidget.index != widget.index) {
-      _animationStateAncestor._planifyUpdate();
-    } else if (oldWidget.curve != widget.curve) {
-      this.setState(() {});
-    }
-    super.didUpdateWidget(oldWidget);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-
-    final animation = _startTime != null ? Tween<double>(
-        begin: 0.0,
-        end: 1.0,
-      ).animate(
-        CurvedAnimation(
-          parent: _animationStateAncestor.widget.animation,
-          curve: Interval(
-            _startTime,
-            _endTime,
-            curve: widget.curve,
-          ),
-        ),
-      ) : ConstantAnimation(0.0);
-
-    return AnimatedBuilder(
-      builder: (context, child) =>
-          this.widget.builder(context, child, animation.value),
-      animation: animation,
-      child: this.widget.child,
-    );
-  }
-}
-
-typedef StepTransitionBuilder = Widget Function(
-    BuildContext context, Widget child, double amount);
-
-class ConstantAnimation<T> extends Animation<T> {
-  const ConstantAnimation(this._value);
-
-  final T _value;
-
-  @override
-  void addListener(listener) {}
-
-  @override
-  void addStatusListener(listener) {}
-
-  @override
-  void removeListener(listener) {}
-
-  @override
-  void removeStatusListener(listener) {}
-
-  @override
-  AnimationStatus get status => AnimationStatus.completed;
-
-  @override
-  T get value => _value;
 }

@@ -28,7 +28,7 @@ class _CounterPageState extends State<EntranceCounterPage> {
       duration: const Duration(seconds: 1),
       child: Scaffold(
         appBar: AppBar(
-          title: AnimatedStep.fade(index: 0, child: Text("Staggered Counter")),
+          title: StaggerStep.fade(index: 0, child: Text("Staggered Counter")),
         ),
         body: Center(
           child: Column(
@@ -41,18 +41,18 @@ class _CounterPageState extends State<EntranceCounterPage> {
                 '$_counter',
                 style: Theme.of(context).textTheme.display1,
               ),
-            ].map((x) => AnimatedStep.slide(child: x)).toList(),
+            ].asMap().entries.map((x) => StaggerStep.slide(index: x.key, child: x.value)).toList(),
           ),
         ),
-        floatingActionButton: AnimatedStep.slide(
+        floatingActionButton: StaggerStep.slide(
             fading: false,
             index: 0,
-            duration: 2,
+            steps: 2,
             curve: Curves.elasticOut,
             child: FloatingActionButton(
               onPressed: _incrementCounter,
               tooltip: 'Increment',
-              child: AnimatedStep.fade(index: 2, child: Icon(Icons.add)),
+              child: StaggerStep.fade(index: 2, child: Icon(Icons.add)),
             )), // This trailing comma makes auto-formatting nicer for build methods.
       ),
     );
