@@ -34,6 +34,11 @@ StaggerIn(
   ]))
 ```
 
+```
+|     1     |     2     |     3     |
+<--------------- red --------------->
+            <-- green -->
+```
 You can also use `Stagger` with a custom `Animation<double>` instead of a `StaggerIn` which is based on a duration.
 
 More examples : [Page transition](https://github.com/aloisdeniel/flutter_staggered_animation/blob/master/staggered_animation_sample/lib/demos/transition_counter.dart), [Iiro's artist page](https://github.com/aloisdeniel/flutter_staggered_animation/blob/master/staggered_animation_sample/lib/demos/artist_page/ui/artist_detail_page.dart)
