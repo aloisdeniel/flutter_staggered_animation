@@ -24,7 +24,7 @@ class _CounterPageState extends State<EntranceCounterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return StaggeredEntrance(
+    return StaggerIn(
       duration: const Duration(seconds: 1),
       child: Scaffold(
         appBar: AppBar(

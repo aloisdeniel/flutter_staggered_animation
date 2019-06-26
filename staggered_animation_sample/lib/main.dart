@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:staggered_animation_sample/demos/hello_world.dart';
 import 'package:staggered_animation_sample/demos/transition_counter.dart';
 
 import 'demos/artist_page/data/mock_data.dart';
@@ -26,6 +27,8 @@ class DemoPicker extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text("Staggered animations")),
       body: ListView(children: <Widget>[
+        DemoTile(
+            "Hello World", (s) => HelloWorldPage.createRoute()),
         DemoTile(
             "Counter (Entrance)", (s) => EntranceCounterPage.createRoute()),
         DemoTile("Counter (Page transition)",

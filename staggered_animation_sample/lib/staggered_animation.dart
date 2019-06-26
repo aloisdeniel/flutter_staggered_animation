@@ -241,14 +241,14 @@ abstract class StepTransitions {
       };
 }
 
-class StaggeredEntrance extends StatefulWidget {
+class StaggerIn extends StatefulWidget {
   final Duration duration;
   final Widget child;
   final int stepDelay;
   final Curve defaultCurve;
   final StepTransitionBuilder defaultTransition;
 
-  StaggeredEntrance(
+  StaggerIn(
       {this.duration,
       this.stepDelay = 0,
       this.defaultCurve = Curves.easeInOut,
@@ -258,10 +258,10 @@ class StaggeredEntrance extends StatefulWidget {
       : super(key: key);
 
   @override
-  _StaggeredEntranceState createState() => _StaggeredEntranceState();
+  _StaggerInState createState() => _StaggerInState();
 }
 
-class _StaggeredEntranceState extends State<StaggeredEntrance>
+class _StaggerInState extends State<StaggerIn>
     with TickerProviderStateMixin {
   AnimationController _controller;
 

@@ -131,7 +131,7 @@ class ArtistDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StaggeredEntrance(
+    return StaggerIn(
       stepDelay: 5,
       duration: const Duration(seconds: 4),
       child: Scaffold(
